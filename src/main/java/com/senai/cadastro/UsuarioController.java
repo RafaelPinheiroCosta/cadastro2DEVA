@@ -17,6 +17,11 @@ public class UsuarioController {
         return usuarios;
     }
 
+    @GetMapping("/{id}")
+    public Usuario listarUsuarioPorId(@PathVariable int id) {
+        return usuarios.get(id);
+    }
+
     @PostMapping
     public Usuario cadastrarUsuario(@RequestBody Usuario usuario) {
         usuarios.add(usuario);
@@ -32,5 +37,9 @@ public class UsuarioController {
         usuarioAtualizado.setEmail(usuario.getEmail());
 
         return usuarioAtualizado;
+    }
+    @DeleteMapping("/{id}")
+    public void deletarUsuario(@PathVariable int id) {
+        usuarios.remove(id);
     }
 }
