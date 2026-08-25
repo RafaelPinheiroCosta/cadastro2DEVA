@@ -1,45 +1,48 @@
 package com.senai.cadastro;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/usuario")
+@RequiredArgsConstructor
 public class UsuarioController {
 
-    ArrayList<Usuario> usuarios = new ArrayList<>();
+    final UsuarioRepository usuarioRepository;
 
     @GetMapping
-    public ArrayList<Usuario> listarTodosUsuarios() {
-        return usuarios;
+    public List<Usuario> listarTodosUsuarios() {
+        return usuarioRepository.findAll();
     }
 
     @GetMapping("/{id}")
-    public Usuario listarUsuarioPorId(@PathVariable int id) {
-        return usuarios.get(id);
+    public Usuario buscarUsuarioPorId(@PathVariable UUID id) {
+        Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
+         if(usuarioOpt.isPresent()) {
+             return  usuarioOpt.get();
+        } else {
+            throw new RuntimeException("Usuário não encontrado");
+        }
     }
-
     @PostMapping
     public Usuario cadastrarUsuario(@RequestBody Usuario usuario) {
-        usuarios.add(usuario);
-        return usuarios.getLast();
+        return usuarioRepository.save(usuario);
     }
 
     @PutMapping("/{id}")
-    public Usuario atualizarUsuario(@PathVariable int id, @RequestBody Usuario usuario) {
-        Usuario usuarioAtualizado = usuarios.get(id);
+    public Usuario atualizarUsuario(@PathVariable UUID id, @RequestBody Usuario usuario) {
+        Usuario usuarioExistente = buscarUsuarioPorId(id);
+        usuarioExistente.setNome(usuario.getNome());
+        usuarioExistente.setCpf(usuario.getCpf());
+        usuarioExistente.setEmail(usuario.getEmail());
 
-        usuarioAtualizado.setNome(usuario.getNome());
-        usuarioAtualizado.setCpf(usuario.getCpf());
-        usuarioAtualizado.setEmail(usuario.getEmail());
-
-        return usuarioAtualizado;
+        return usuarioRepository.save(usuarioExistente);
     }
     @DeleteMapping("/{id}")
-    public void deletarUsuario(@PathVariable int id) {
-        usuarios.remove(id);
+    public void deletarUsuario(@PathVariable UUID id) {
+        usuarioRepository.deleteById(id);
     }
 }
