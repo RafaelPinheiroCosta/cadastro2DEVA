@@ -43,6 +43,7 @@ public class UsuarioController {
     }
     @DeleteMapping("/{id}")
     public void deletarUsuario(@PathVariable UUID id) {
-        usuarioRepository.deleteById(id);
+
+        usuarioRepository.delete(buscarUsuarioPorId(id));
     }
 }
