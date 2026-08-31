@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.validator.constraints.br.CPF;
 
 import java.util.UUID;
 
@@ -41,8 +42,9 @@ public class Usuario {
     private String nome;
 
     @NotBlank(message = "CPF é obrigatório")
-    @Pattern(regexp = "\\d{11}", message = "CPF deve conter exatamente 11 dígitos")
+    //@Pattern(regexp = "\\d{11}", message = "CPF deve conter exatamente 11 dígitos")
     @Column(name = "cpf", nullable = false, length = 11, unique = true)
+    @CPF(message = "CPF inválido")
     private String cpf;
 
     @NotBlank(message = "E-mail é obrigatório")

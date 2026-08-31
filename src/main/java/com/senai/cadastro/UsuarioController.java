@@ -1,5 +1,6 @@
 package com.senai.cadastro;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -28,12 +29,12 @@ public class UsuarioController {
         }
     }
     @PostMapping
-    public Usuario cadastrarUsuario(@RequestBody Usuario usuario) {
+    public Usuario cadastrarUsuario(@Valid @RequestBody Usuario usuario) {
         return usuarioRepository.save(usuario);
     }
 
     @PutMapping("/{id}")
-    public Usuario atualizarUsuario(@PathVariable UUID id, @RequestBody Usuario usuario) {
+    public Usuario atualizarUsuario(@PathVariable UUID id, @Valid @RequestBody Usuario usuario) {
         Usuario usuarioExistente = buscarUsuarioPorId(id);
         usuarioExistente.setNome(usuario.getNome());
         usuarioExistente.setCpf(usuario.getCpf());
@@ -43,7 +44,6 @@ public class UsuarioController {
     }
     @DeleteMapping("/{id}")
     public void deletarUsuario(@PathVariable UUID id) {
-
         usuarioRepository.delete(buscarUsuarioPorId(id));
     }
 }
