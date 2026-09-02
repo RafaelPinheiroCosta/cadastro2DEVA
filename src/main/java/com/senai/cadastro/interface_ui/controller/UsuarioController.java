@@ -1,5 +1,8 @@
-package com.senai.cadastro;
+package com.senai.cadastro.interface_ui.controller;
 
+import com.senai.cadastro.application.service.UsuarioService;
+import com.senai.cadastro.domain.repository.UsuarioRepository;
+import com.senai.cadastro.domain.entity.Usuario;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -12,38 +15,29 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UsuarioController {
 
-    final UsuarioRepository usuarioRepository;
+    final UsuarioService usuarioService;
 
     @GetMapping
     public List<Usuario> listarTodosUsuarios() {
-        return usuarioRepository.findAll();
+        return usuarioService.findAll();
     }
 
     @GetMapping("/{id}")
     public Usuario buscarUsuarioPorId(@PathVariable UUID id) {
-        Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
-         if(usuarioOpt.isPresent()) {
-             return  usuarioOpt.get();
-        } else {
-            throw new RuntimeException("Usuário não encontrado");
-        }
+       return usuarioService.findById(id);
     }
+
     @PostMapping
     public Usuario cadastrarUsuario(@Valid @RequestBody Usuario usuario) {
-        return usuarioRepository.save(usuario);
+        return usuarioService.save(usuario);
     }
 
     @PutMapping("/{id}")
     public Usuario atualizarUsuario(@PathVariable UUID id, @Valid @RequestBody Usuario usuario) {
-        Usuario usuarioExistente = buscarUsuarioPorId(id);
-        usuarioExistente.setNome(usuario.getNome());
-        usuarioExistente.setCpf(usuario.getCpf());
-        usuarioExistente.setEmail(usuario.getEmail());
-
-        return usuarioRepository.save(usuarioExistente);
+       return usuarioService.update(id,usuario);
     }
     @DeleteMapping("/{id}")
     public void deletarUsuario(@PathVariable UUID id) {
-        usuarioRepository.delete(buscarUsuarioPorId(id));
+        usuarioService.delete(id);
     }
 }

@@ -1,9 +1,8 @@
-package com.senai.cadastro;
+package com.senai.cadastro.domain.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -35,6 +34,11 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
+
+    @NotBlank(message = "Senha é obrigatório")
+    @Size(min = 4, max = 8, message = "Senha deve ter entre 4 e 8 caracteres")
+    @Column(name = "senha", nullable = false, length = 8)
+    private String senha;
 
     @NotBlank(message = "Nome é obrigatório")
     @Size(min = 2, max = 150, message = "Nome deve ter entre 2 e 150 caracteres")
