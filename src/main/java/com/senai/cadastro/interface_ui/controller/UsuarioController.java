@@ -1,5 +1,7 @@
 package com.senai.cadastro.interface_ui.controller;
 
+import com.senai.cadastro.application.dto.UsuarioRequestDTO;
+import com.senai.cadastro.application.dto.UsuarioResponseDTO;
 import com.senai.cadastro.application.service.UsuarioService;
 import com.senai.cadastro.domain.repository.UsuarioRepository;
 import com.senai.cadastro.domain.entity.Usuario;
@@ -18,24 +20,26 @@ public class UsuarioController {
     final UsuarioService usuarioService;
 
     @GetMapping
-    public List<Usuario> listarTodosUsuarios() {
+    public List<UsuarioResponseDTO> listarTodosUsuarios() {
         return usuarioService.findAll();
     }
 
     @GetMapping("/{id}")
-    public Usuario buscarUsuarioPorId(@PathVariable UUID id) {
+    public UsuarioResponseDTO buscarUsuarioPorId(@PathVariable UUID id) {
        return usuarioService.findById(id);
     }
 
     @PostMapping
-    public Usuario cadastrarUsuario(@Valid @RequestBody Usuario usuario) {
-        return usuarioService.save(usuario);
+    public UsuarioResponseDTO cadastrarUsuario(@Valid @RequestBody UsuarioRequestDTO usuarioRequestDTO) {
+        return usuarioService.save(usuarioRequestDTO);
     }
 
     @PutMapping("/{id}")
-    public Usuario atualizarUsuario(@PathVariable UUID id, @Valid @RequestBody Usuario usuario) {
-       return usuarioService.update(id,usuario);
+    public UsuarioResponseDTO atualizarUsuario(@PathVariable UUID id,
+                                               @Valid @RequestBody UsuarioRequestDTO usuarioRequestDTO) {
+       return usuarioService.update(id,usuarioRequestDTO);
     }
+
     @DeleteMapping("/{id}")
     public void deletarUsuario(@PathVariable UUID id) {
         usuarioService.delete(id);
