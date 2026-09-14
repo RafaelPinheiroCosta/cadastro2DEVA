@@ -7,7 +7,6 @@ import java.net.URI;
 import java.time.LocalDateTime;
 
 public class ProblemDetailUtils {
-
     public static ProblemDetail buildProblem(
             HttpStatus status,
             String title,

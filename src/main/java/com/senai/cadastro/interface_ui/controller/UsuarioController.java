@@ -127,11 +127,9 @@ public class UsuarioController {
             summary = "Cadastrar usuário administrativamente",
             description = """
                     Cria um novo USER.
-                    
                     A criação de um ADMIN ocorre em duas etapas:
-                    
-                    1. cadastrar o usuário;
-                    2. alterar o perfil pelo endpoint PATCH /usuario/{id}/perfil.
+                        1. cadastrar o usuário;
+                        2. alterar o perfil pelo endpoint PATCH /usuario/{id}/perfil.
                     """
     )
     @ApiResponses({
@@ -248,14 +246,10 @@ public class UsuarioController {
             summary = "Alterar perfil",
             description = """
                     Endpoint exclusivo de ADMIN.
-                    
                     Permite promover:
-                    
-                    USER -> ADMIN
-                    
+                        USER -> ADMIN
                     ou rebaixar:
-                    
-                    ADMIN -> USER
+                        ADMIN -> USER
                     """
     )
     @ApiResponses({
