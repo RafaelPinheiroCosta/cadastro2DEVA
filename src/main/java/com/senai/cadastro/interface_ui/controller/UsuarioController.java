@@ -7,7 +7,10 @@ import com.senai.cadastro.domain.repository.UsuarioRepository;
 import com.senai.cadastro.domain.entity.Usuario;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,28 +23,34 @@ public class UsuarioController {
     final UsuarioService usuarioService;
 
     @GetMapping
-    public List<UsuarioResponseDTO> listarTodosUsuarios() {
-        return usuarioService.findAll();
+    public ResponseEntity<List<UsuarioResponseDTO>> listarTodosUsuarios() {
+        return ResponseEntity.ok(usuarioService.findAll());
     }
 
     @GetMapping("/{id}")
-    public UsuarioResponseDTO buscarUsuarioPorId(@PathVariable UUID id) {
-       return usuarioService.findById(id);
+    public ResponseEntity<UsuarioResponseDTO> buscarUsuarioPorId(@PathVariable UUID id) {
+       return ResponseEntity.ok(usuarioService.findById(id));
     }
 
     @PostMapping
-    public UsuarioResponseDTO cadastrarUsuario(@Valid @RequestBody UsuarioRequestDTO usuarioRequestDTO) {
-        return usuarioService.save(usuarioRequestDTO);
+    public ResponseEntity<UsuarioResponseDTO> cadastrarUsuario(
+            @Valid @RequestBody UsuarioRequestDTO usuarioRequestDTO
+    ) {
+        UsuarioResponseDTO usuarioSalvo = usuarioService.save(usuarioRequestDTO);
+        return ResponseEntity.created(
+                    URI.create("/usuario/" + usuarioSalvo.id())
+                ).body(usuarioSalvo);
     }
 
     @PutMapping("/{id}")
-    public UsuarioResponseDTO atualizarUsuario(@PathVariable UUID id,
+    public ResponseEntity<UsuarioResponseDTO> atualizarUsuario(@PathVariable UUID id,
                                                @Valid @RequestBody UsuarioRequestDTO usuarioRequestDTO) {
-       return usuarioService.update(id,usuarioRequestDTO);
+       return ResponseEntity.ok(usuarioService.update(id,usuarioRequestDTO));
     }
 
     @DeleteMapping("/{id}")
-    public void deletarUsuario(@PathVariable UUID id) {
+    public ResponseEntity<Void> deletarUsuario(@PathVariable UUID id) {
         usuarioService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }
