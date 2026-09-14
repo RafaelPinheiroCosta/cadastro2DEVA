@@ -129,16 +129,14 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize ->
                         authorize
-                                .requestMatchers(
-                                        "/auth/register",
-                                        "/auth/login"
-                                ).permitAll()
+                                .requestMatchers("/auth/login").permitAll()
                                 .requestMatchers(
                                         "/v3/api-docs/**",
                                         "/swagger-ui/**",
                                         "/swagger-ui.html"
                                 ).permitAll()
                                 .requestMatchers("/h2-console/**").permitAll()
+                                .requestMatchers("/usuario/me").authenticated()
                                 .requestMatchers("/usuario/**").hasRole("ADMIN")
                                 .anyRequest().authenticated()
                 )

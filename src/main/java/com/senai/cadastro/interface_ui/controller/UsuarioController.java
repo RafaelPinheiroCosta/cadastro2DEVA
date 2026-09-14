@@ -17,6 +17,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -28,11 +30,41 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @Tag(
-        name = "Administração de usuários",
-        description = "Operações administrativas. Todos os endpoints exigem perfil ADMIN."
+        name = "Usuários",
+        description = "Consulta do usuário autenticado e operações administrativas."
 )
 public class UsuarioController {
     private final UsuarioService usuarioService;
+
+    @GetMapping("/me")
+    @Operation(
+            summary = "Consultar usuário autenticado",
+            description = "Disponível para USER e ADMIN."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Usuário autenticado encontrado",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = UsuarioResponseDTO.class),
+                            examples = @ExampleObject(value = OpenApiExamples.USER)
+                    ))
+            ,
+            @ApiResponse(responseCode = "401", description = "Não autenticado",
+                    content = @Content(mediaType = "application/problem+json",
+                            examples = @ExampleObject(value = OpenApiExamples.UNAUTHORIZED)
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "Usuário associado ao token não foi encontrado",
+                    content = @Content(mediaType = "application/problem+json",
+                            examples = @ExampleObject(value = OpenApiExamples.NOT_FOUND)
+                    )
+            )
+    })
+    public ResponseEntity<UsuarioResponseDTO> buscarUsuarioAutenticado(@AuthenticationPrincipal Jwt jwt) {
+        UUID usuarioId = UUID.fromString(jwt.getClaimAsString("usuarioId"));
+        return ResponseEntity.ok(usuarioService.findById(usuarioId));
+    }
 
     @GetMapping
     @Operation(
@@ -127,11 +159,9 @@ public class UsuarioController {
             summary = "Cadastrar usuário administrativamente",
             description = """
                     Cria um novo USER.
-                    
                     A criação de um ADMIN ocorre em duas etapas:
-                    
-                    1. cadastrar o usuário;
-                    2. alterar o perfil pelo endpoint PATCH /usuario/{id}/perfil.
+                        1. cadastrar o usuário;
+                        2. alterar o perfil pelo endpoint PATCH /usuario/{id}/perfil.
                     """
     )
     @ApiResponses({
@@ -248,14 +278,10 @@ public class UsuarioController {
             summary = "Alterar perfil",
             description = """
                     Endpoint exclusivo de ADMIN.
-                    
                     Permite promover:
-                    
-                    USER -> ADMIN
-                    
+                        USER -> ADMIN
                     ou rebaixar:
-                    
-                    ADMIN -> USER
+                        ADMIN -> USER
                     """
     )
     @ApiResponses({
@@ -295,6 +321,11 @@ public class UsuarioController {
                             mediaType = "application/problem+json",
                             examples = @ExampleObject( value = OpenApiExamples.NOT_FOUND)
                     )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "O último administrador não pode ser removido ou rebaixado",
+                    content = @Content(mediaType = "application/problem+json")
             )
     })
     public ResponseEntity<UsuarioResponseDTO>alterarPerfil(
@@ -341,6 +372,11 @@ public class UsuarioController {
                             mediaType = "application/problem+json",
                             examples = @ExampleObject( value = OpenApiExamples.NOT_FOUND)
                     )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "O último administrador não pode ser removido ou rebaixado",
+                    content = @Content(mediaType = "application/problem+json")
             )
     })
     public ResponseEntity<Void> deletarUsuario(@PathVariable UUID id) {

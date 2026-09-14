@@ -3,8 +3,10 @@ package com.senai.cadastro.application.service;
 import com.senai.cadastro.application.dto.PerfilUpdateDTO;
 import com.senai.cadastro.application.dto.UsuarioRequestDTO;
 import com.senai.cadastro.application.dto.UsuarioResponseDTO;
+import com.senai.cadastro.application.exception.UltimoAdministradorException;
 import com.senai.cadastro.application.exception.UsuarioDuplicadoException;
 import com.senai.cadastro.application.exception.UsuarioNaoEncontradoException;
+import com.senai.cadastro.domain.entity.Perfil;
 import com.senai.cadastro.domain.entity.Usuario;
 import com.senai.cadastro.domain.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -69,16 +71,20 @@ public class UsuarioService {
 
     @Transactional
     public UsuarioResponseDTO updatePerfil(UUID id,PerfilUpdateDTO perfilUpdateDTO) {
-
         Usuario usuario = buscarEntidadePorId(id);
-        usuario.setPerfil(perfilUpdateDTO.perfil());
+        Perfil novoPerfil = perfilUpdateDTO.perfil();
 
+        if (usuario.getPerfil() == Perfil.ADMIN && novoPerfil == Perfil.USER)
+            validarUltimoAdministrador(usuario);
+
+        usuario.setPerfil(novoPerfil);
         return UsuarioResponseDTO.fromEntity(usuarioRepository.save(usuario));
     }
 
     @Transactional
     public void delete(UUID id) {
         Usuario usuario = buscarEntidadePorId(id);
+        validarUltimoAdministrador(usuario);
         usuarioRepository.delete(usuario);
     }
 
@@ -102,6 +108,11 @@ public class UsuarioService {
 
         if (usuarioRepository.existsByCpfAndIdNot(cpf,id))
             throw new UsuarioDuplicadoException("CPF");
+    }
+
+    private void validarUltimoAdministrador(Usuario usuario) {
+        if (usuario.getPerfil() == Perfil.ADMIN && usuarioRepository.countByPerfil(Perfil.ADMIN) <= 1)
+            throw new UltimoAdministradorException();
     }
 
     private String normalizarEmail(String email) {

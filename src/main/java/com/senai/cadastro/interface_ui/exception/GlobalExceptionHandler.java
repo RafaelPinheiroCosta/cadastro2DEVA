@@ -1,6 +1,7 @@
 package com.senai.cadastro.interface_ui.exception;
 
 import com.senai.cadastro.application.exception.CredenciaisInvalidasException;
+import com.senai.cadastro.application.exception.UltimoAdministradorException;
 import com.senai.cadastro.application.exception.UsuarioDuplicadoException;
 import com.senai.cadastro.application.exception.UsuarioNaoEncontradoException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -111,6 +112,19 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT,
                 "Conflito de dados",
                 "A operação viola uma restrição de integridade dos dados",
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(UltimoAdministradorException.class)
+    public ProblemDetail handleUltimoAdministrador(
+            UltimoAdministradorException ex,
+            HttpServletRequest request
+    ) {
+        return buildProblem(
+                HttpStatus.CONFLICT,
+                "Operação administrativa inválida",
+                ex.getMessage(),
                 request.getRequestURI()
         );
     }

@@ -42,16 +42,18 @@ public class AdminBootstrap
     @Transactional
     public void run(ApplicationArguments args) {
 
-        if (!enabled)
+        if (!enabled) {
             log.info("Bootstrap administrativo desabilitado.");
+            return;
+        }
+
+        if (usuarioRepository.existsByPerfil(Perfil.ADMIN)) {
+            log.info("Bootstrap administrativo não executado: já existe um ADMIN.");
+            return;
+        }
 
         String emailNormalizado = email.trim().toLowerCase(Locale.ROOT);
         String cpfNormalizado = cpf.replaceAll("\\D","");
-        var adminExistente = usuarioRepository.findByEmailIgnoreCase(emailNormalizado);
-
-        if (adminExistente.isPresent())
-            log.info("Administrador bootstrap já existe: {}",emailNormalizado);
-
 
         Usuario admin = new Usuario(
                         null,
