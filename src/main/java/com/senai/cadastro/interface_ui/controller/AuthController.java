@@ -28,278 +28,51 @@ import java.net.URI;
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 
-@Tag(
-        name = "Autenticação",
-        description =
-                "Cadastro, login e identificação do usuário autenticado"
-)
+@Tag(name = "Autenticação", description = "Cadastro, login e identificação do usuário autenticado")
 public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/register")
-
-    @Operation(
-            summary = "Cadastrar usuário",
-            description = """
-                    Endpoint público.
-
-                    Todo usuário cadastrado por este endpoint
-                    recebe obrigatoriamente o perfil USER.
-
-                    O perfil não é recebido no JSON para impedir
-                    que o próprio cliente se transforme em ADMIN.
-                    """
-    )
-
-    @ApiResponses({
-
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "Usuário cadastrado com sucesso",
-
-                    content = @Content(
-
-                            mediaType = "application/json",
-
-                            schema = @Schema(
-                                    implementation =
-                                            UsuarioResponseDTO.class
-                            ),
-
-                            examples = @ExampleObject(
-                                    value =
-                                            OpenApiExamples.USER
-                            )
-                    )
-            ),
-
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Dados inválidos",
-
-                    content = @Content(
-
-                            mediaType =
-                                    "application/problem+json",
-
-                            schema = @Schema(
-                                    implementation =
-                                            ProblemDetail.class
-                            ),
-
-                            examples = @ExampleObject(
-                                    value =
-                                            OpenApiExamples
-                                                    .VALIDATION_ERROR
-                            )
-                    )
-            ),
-
-            @ApiResponse(
-                    responseCode = "409",
-                    description =
-                            "CPF ou e-mail já cadastrado",
-
-                    content = @Content(
-
-                            mediaType =
-                                    "application/problem+json",
-
-                            schema = @Schema(
-                                    implementation =
-                                            ProblemDetail.class
-                            ),
-
-                            examples = @ExampleObject(
-                                    value =
-                                            OpenApiExamples.CONFLICT
-                            )
-                    )
-            )
-    })
-
-    public ResponseEntity<UsuarioResponseDTO>
-    register(
-            @Valid
-            @RequestBody
-            UsuarioRequestDTO request
-    ) {
-
-        UsuarioResponseDTO usuario =
-                authService.register(
-                        request
-                );
-
-        return ResponseEntity
-                .created(
-                        URI.create(
-                                "/usuario/"
-                                        + usuario.id()
-                        )
-                )
-                .body(
-                        usuario
-                );
-    }
-
     @PostMapping("/login")
-
     @Operation(
             summary = "Realizar login",
             description = """
-                    Valida e-mail e senha.
-
-                    Em caso de sucesso é emitido um JWT assinado
-                    contendo a identidade e o perfil do usuário.
-                    """
+            Valida e-mail e senha.
+            
+            Em caso de sucesso é emitido um JWT assinado
+            contendo a identidade e o perfil do usuário.
+            """
     )
-
     @ApiResponses({
-
             @ApiResponse(
                     responseCode = "200",
                     description = "Login realizado",
-
                     content = @Content(
-
-                            mediaType =
-                                    "application/json",
-
-                            schema = @Schema(
-                                    implementation =
-                                            LoginResponseDTO.class
-                            ),
-
-                            examples = @ExampleObject(
-                                    value =
-                                            OpenApiExamples.LOGIN
-                            )
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = LoginResponseDTO.class),
+                            examples = @ExampleObject(value = OpenApiExamples.LOGIN)
                     )
             ),
-
             @ApiResponse(
                     responseCode = "400",
-                    description =
-                            "Dados da requisição inválidos",
-
+                    description = "Dados da requisição inválidos",
                     content = @Content(
-                            mediaType =
-                                    "application/problem+json",
-                            schema = @Schema(
-                                    implementation =
-                                            ProblemDetail.class
-                            )
+                            mediaType = "application/problem+json",
+                            schema = @Schema(implementation = ProblemDetail.class)
                     )
             ),
-
             @ApiResponse(
                     responseCode = "401",
-                    description =
-                            "E-mail ou senha incorretos",
-
+                    description = "E-mail ou senha incorretos",
                     content = @Content(
-
-                            mediaType =
-                                    "application/problem+json",
-
-                            schema = @Schema(
-                                    implementation =
-                                            ProblemDetail.class
-                            ),
-
-                            examples = @ExampleObject(
-                                    value =
-                                            OpenApiExamples
-                                                    .INVALID_CREDENTIALS
-                            )
+                            mediaType = "application/problem+json",
+                            schema = @Schema(implementation = ProblemDetail.class),
+                            examples = @ExampleObject(value = OpenApiExamples.INVALID_CREDENTIALS)
                     )
             )
     })
-
-    public ResponseEntity<LoginResponseDTO>
-    login(
-            @Valid
-            @RequestBody
-            LoginRequestDTO request
-    ) {
-
-        return ResponseEntity.ok(
-                authService.login(
-                        request
-                )
-        );
+    public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO request) {
+        return ResponseEntity.ok(authService.login(request));
     }
 
-    @GetMapping("/me")
-
-    @SecurityRequirement(
-            name = "bearerAuth"
-    )
-
-    @Operation(
-            summary = "Consultar usuário autenticado",
-            description =
-                    "Exige um JWT válido de USER ou ADMIN."
-    )
-
-    @ApiResponses({
-
-            @ApiResponse(
-                    responseCode = "200",
-                    description =
-                            "Dados do usuário autenticado",
-
-                    content = @Content(
-
-                            mediaType =
-                                    "application/json",
-
-                            schema = @Schema(
-                                    implementation =
-                                            UsuarioResponseDTO.class
-                            ),
-
-                            examples = @ExampleObject(
-                                    value =
-                                            OpenApiExamples.USER
-                            )
-                    )
-            ),
-
-            @ApiResponse(
-                    responseCode = "401",
-                    description =
-                            "Token ausente, inválido ou expirado",
-
-                    content = @Content(
-
-                            mediaType =
-                                    "application/problem+json",
-
-                            schema = @Schema(
-                                    implementation =
-                                            ProblemDetail.class
-                            ),
-
-                            examples = @ExampleObject(
-                                    value =
-                                            OpenApiExamples.UNAUTHORIZED
-                            )
-                    )
-            )
-    })
-
-    public ResponseEntity<UsuarioResponseDTO>
-    me(
-            @AuthenticationPrincipal
-            Jwt jwt
-    ) {
-
-        return ResponseEntity.ok(
-                authService.me(
-                        jwt.getSubject()
-                )
-        );
-    }
 }

@@ -19,109 +19,39 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class JwtService {
-
     private final JwtEncoder jwtEncoder;
 
-    @Value(
-            "${security.jwt.issuer}"
-    )
+    @Value("${security.jwt.issuer}")
     private String issuer;
 
-    @Value(
-            "${security.jwt.expires-in-seconds}"
-    )
+    @Value("${security.jwt.expires-in-seconds}")
     private long expiresInSeconds;
 
-    public LoginResponseDTO gerarToken(
-            Usuario usuario
-    ) {
+    public LoginResponseDTO gerarToken(Usuario usuario) {
 
-        Instant agora =
-                Instant.now();
+        Instant agora = Instant.now();
+        Instant expiracao = agora.plusSeconds(expiresInSeconds);
 
-        Instant expiracao =
-                agora.plusSeconds(
-                        expiresInSeconds
-                );
+        String authority = "ROLE_" + usuario.getPerfil().name();
 
-        String authority =
-                "ROLE_"
-                        + usuario
-                            .getPerfil()
-                            .name();
-
-        JwtClaimsSet claims =
-                JwtClaimsSet
-                        .builder()
-
-                        .issuer(
-                                issuer
-                        )
-
-                        .issuedAt(
-                                agora
-                        )
-
-                        .expiresAt(
-                                expiracao
-                        )
-
-                        /*
-                         * O subject identifica o usuario
-                         * autenticado.
-                         */
-                        .subject(
-                                usuario.getEmail()
-                        )
-
-                        .claim(
-                                "usuarioId",
-                                usuario
-                                        .getId()
-                                        .toString()
-                        )
-
-                        .claim(
-                                "perfil",
-                                usuario
-                                        .getPerfil()
-                                        .name()
-                        )
-
-                        .claim(
-                                "roles",
-                                List.of(
-                                        authority
-                                )
-                        )
-
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                        .issuer(issuer)
+                        .issuedAt(agora)
+                        .expiresAt(expiracao)
+                        .subject(usuario.getEmail())
+                        .claim("usuarioId",usuario.getId().toString())
+                        .claim("perfil",usuario.getPerfil().name())
+                        .claim("roles",List.of(authority))
                         .build();
 
-        JwsHeader header =
-                JwsHeader
-                        .with(
-                                MacAlgorithm.HS256
-                        )
-                        .type(
-                                "JWT"
-                        )
-                        .build();
-
-        Jwt jwt =
-                jwtEncoder.encode(
-                        JwtEncoderParameters.from(
-                                header,
-                                claims
-                        )
-                );
+        JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).type("JWT").build();
+        Jwt jwt = jwtEncoder.encode(JwtEncoderParameters.from(header,claims));
 
         return new LoginResponseDTO(
                 jwt.getTokenValue(),
                 "Bearer",
                 expiresInSeconds,
-                UsuarioResponseDTO.fromEntity(
-                        usuario
-                )
+                UsuarioResponseDTO.fromEntity(usuario)
         );
     }
 }

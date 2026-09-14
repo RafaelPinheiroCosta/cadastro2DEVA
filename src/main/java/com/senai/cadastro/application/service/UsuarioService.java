@@ -21,310 +21,94 @@ import java.util.UUID;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
-
     private final PasswordEncoder passwordEncoder;
-
-    @Transactional(
-            readOnly = true
-    )
+    @Transactional(readOnly = true)
     public List<UsuarioResponseDTO> findAll() {
-
-        return usuarioRepository
-                .findAll()
+        return usuarioRepository.findAll()
                 .stream()
-                .map(
-                        UsuarioResponseDTO::fromEntity
-                )
+                .map(UsuarioResponseDTO::fromEntity)
                 .toList();
     }
 
-    @Transactional(
-            readOnly = true
-    )
-    public UsuarioResponseDTO findById(
-            UUID id
-    ) {
-
-        return UsuarioResponseDTO.fromEntity(
-                buscarEntidadePorId(id)
-        );
-    }
-
-    @Transactional(
-            readOnly = true
-    )
-    public UsuarioResponseDTO findByEmail(
-            String email
-    ) {
-
-        Usuario usuario =
-                usuarioRepository
-                        .findByEmailIgnoreCase(
-                                normalizarEmail(email)
-                        )
-                        .orElseThrow(
-                                UsuarioNaoEncontradoException::new
-                        );
-
-        return UsuarioResponseDTO.fromEntity(
-                usuario
-        );
+    @Transactional(readOnly = true)
+    public UsuarioResponseDTO findById(UUID id) {
+        return UsuarioResponseDTO.fromEntity(buscarEntidadePorId(id));
     }
 
     @Transactional
-    public UsuarioResponseDTO save(
-            UsuarioRequestDTO usuarioRequestDTO
-    ) {
+    public UsuarioResponseDTO save(UsuarioRequestDTO usuarioRequestDTO) {
 
-        String email =
-                normalizarEmail(
-                        usuarioRequestDTO.email()
-                );
+        String email = normalizarEmail( usuarioRequestDTO.email());
+        String cpf = normalizarCpf(usuarioRequestDTO.cpf());
+        validarDuplicidadeNovoUsuario(email, cpf);
 
-        String cpf =
-                normalizarCpf(
-                        usuarioRequestDTO.cpf()
-                );
-
-        validarDuplicidadeNovoUsuario(
-                email,
-                cpf
-        );
-
-        /*
-         * O DTO continua responsável pelo mapeamento
-         * DTO -> entidade, como no projeto atual.
-         */
-        Usuario usuario =
-                usuarioRequestDTO.toEntity();
+        Usuario usuario = usuarioRequestDTO.toEntity();
 
         usuario.setEmail(email);
-
         usuario.setCpf(cpf);
+        usuario.setSenha(passwordEncoder.encode(usuarioRequestDTO.senha()));
 
-        /*
-         * Antes de persistir:
-         *
-         * senha original
-         *       |
-         *       v
-         * BCrypt
-         *       |
-         *       v
-         * banco
-         */
-        usuario.setSenha(
-                passwordEncoder.encode(
-                        usuarioRequestDTO.senha()
-                )
-        );
-
-        return UsuarioResponseDTO.fromEntity(
-                usuarioRepository.save(
-                        usuario
-                )
-        );
+        return UsuarioResponseDTO.fromEntity(usuarioRepository.save(usuario));
     }
 
     @Transactional
-    public UsuarioResponseDTO update(
-            UUID id,
-            UsuarioRequestDTO usuarioRequestDTO
-    ) {
+    public UsuarioResponseDTO update(UUID id, UsuarioRequestDTO usuarioRequestDTO) {
 
-        Usuario usuarioExistente =
-                buscarEntidadePorId(id);
+        Usuario usuarioExistente = buscarEntidadePorId(id);
+        String email = normalizarEmail(usuarioRequestDTO.email());
+        String cpf = normalizarCpf(usuarioRequestDTO.cpf());
+        validarDuplicidadeAtualizacao(id,email,cpf);
 
-        String email =
-                normalizarEmail(
-                        usuarioRequestDTO.email()
-                );
+        usuarioExistente.setNome(usuarioRequestDTO.nome());
+        usuarioExistente.setCpf(cpf);
+        usuarioExistente.setEmail(email);
+        usuarioExistente.setSenha(passwordEncoder.encode(usuarioRequestDTO.senha()));
 
-        String cpf =
-                normalizarCpf(
-                        usuarioRequestDTO.cpf()
-                );
-
-        validarDuplicidadeAtualizacao(
-                id,
-                email,
-                cpf
-        );
-
-        usuarioExistente.setNome(
-                usuarioRequestDTO.nome()
-        );
-
-        usuarioExistente.setCpf(
-                cpf
-        );
-
-        usuarioExistente.setEmail(
-                email
-        );
-
-        usuarioExistente.setSenha(
-                passwordEncoder.encode(
-                        usuarioRequestDTO.senha()
-                )
-        );
-
-        /*
-         * IMPORTANTE:
-         *
-         * O perfil nao e alterado por este DTO.
-         *
-         * Alteracao USER <-> ADMIN possui
-         * endpoint administrativo proprio.
-         */
-        return UsuarioResponseDTO.fromEntity(
-                usuarioRepository.save(
-                        usuarioExistente
-                )
-        );
+        return UsuarioResponseDTO.fromEntity(usuarioRepository.save(usuarioExistente));
     }
 
     @Transactional
-    public UsuarioResponseDTO updatePerfil(
-            UUID id,
-            PerfilUpdateDTO perfilUpdateDTO
-    ) {
+    public UsuarioResponseDTO updatePerfil(UUID id,PerfilUpdateDTO perfilUpdateDTO) {
 
-        Usuario usuario =
-                buscarEntidadePorId(id);
+        Usuario usuario = buscarEntidadePorId(id);
+        usuario.setPerfil(perfilUpdateDTO.perfil());
 
-        usuario.setPerfil(
-                perfilUpdateDTO.perfil()
-        );
-
-        return UsuarioResponseDTO.fromEntity(
-                usuarioRepository.save(
-                        usuario
-                )
-        );
+        return UsuarioResponseDTO.fromEntity(usuarioRepository.save(usuario));
     }
 
     @Transactional
-    public void delete(
-            UUID id
-    ) {
-
-        Usuario usuario =
-                buscarEntidadePorId(id);
-
-        usuarioRepository.delete(
-                usuario
-        );
+    public void delete(UUID id) {
+        Usuario usuario = buscarEntidadePorId(id);
+        usuarioRepository.delete(usuario);
     }
 
-    @Transactional(
-            readOnly = true
-    )
-    public Usuario buscarPorEmailParaAutenticacao(
-            String email
-    ) {
-
-        return usuarioRepository
-                .findByEmailIgnoreCase(
-                        normalizarEmail(email)
-                )
-                .orElseThrow(
-                        UsuarioNaoEncontradoException::new
-                );
-    }
-
-    private Usuario buscarEntidadePorId(
-            UUID id
-    ) {
-
+    private Usuario buscarEntidadePorId(UUID id) {
         return usuarioRepository
                 .findById(id)
-                .orElseThrow(
-                        UsuarioNaoEncontradoException::new
-                );
+                .orElseThrow(UsuarioNaoEncontradoException::new);
     }
 
-    private void validarDuplicidadeNovoUsuario(
-            String email,
-            String cpf
-    ) {
+    private void validarDuplicidadeNovoUsuario(String email, String cpf) {
+        if (usuarioRepository.existsByEmailIgnoreCase(email))
+            throw new UsuarioDuplicadoException("e-mail");
 
-        if (
-                usuarioRepository
-                        .existsByEmailIgnoreCase(
-                                email
-                        )
-        ) {
+        if (usuarioRepository.existsByCpf(cpf))
+            throw new UsuarioDuplicadoException("CPF");
 
-            throw new UsuarioDuplicadoException(
-                    "Já existe um usuário cadastrado com este e-mail"
-            );
-        }
+    }
+    private void validarDuplicidadeAtualizacao(UUID id,String email,String cpf) {
+        if (usuarioRepository.existsByEmailIgnoreCaseAndIdNot(email,id))
+            throw new UsuarioDuplicadoException("e-mail");
 
-        if (
-                usuarioRepository
-                        .existsByCpf(
-                                cpf
-                        )
-        ) {
-
-            throw new UsuarioDuplicadoException(
-                    "Já existe um usuário cadastrado com este CPF"
-            );
-        }
+        if (usuarioRepository.existsByCpfAndIdNot(cpf,id))
+            throw new UsuarioDuplicadoException("CPF");
     }
 
-    private void validarDuplicidadeAtualizacao(
-            UUID id,
-            String email,
-            String cpf
-    ) {
-
-        if (
-                usuarioRepository
-                        .existsByEmailIgnoreCaseAndIdNot(
-                                email,
-                                id
-                        )
-        ) {
-
-            throw new UsuarioDuplicadoException(
-                    "Já existe outro usuário cadastrado com este e-mail"
-            );
-        }
-
-        if (
-                usuarioRepository
-                        .existsByCpfAndIdNot(
-                                cpf,
-                                id
-                        )
-        ) {
-
-            throw new UsuarioDuplicadoException(
-                    "Já existe outro usuário cadastrado com este CPF"
-            );
-        }
+    private String normalizarEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 
-    private String normalizarEmail(
-            String email
-    ) {
-
-        return email
-                .trim()
-                .toLowerCase(
-                        Locale.ROOT
-                );
-    }
-
-    private String normalizarCpf(
-            String cpf
-    ) {
-
-        return cpf.replaceAll(
-                "\\D",
-                ""
-        );
+    private String normalizarCpf(String cpf) {
+        return cpf.replaceAll("\\D","");
     }
 }

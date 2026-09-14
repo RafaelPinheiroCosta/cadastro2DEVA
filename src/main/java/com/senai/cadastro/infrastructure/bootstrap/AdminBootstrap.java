@@ -19,14 +19,8 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class AdminBootstrap
         implements ApplicationRunner {
-
-    private static final Logger log =
-            LoggerFactory.getLogger(
-                    AdminBootstrap.class
-            );
-
+    private static final Logger log = LoggerFactory.getLogger(AdminBootstrap.class);
     private final UsuarioRepository usuarioRepository;
-
     private final PasswordEncoder passwordEncoder;
 
     @Value("${bootstrap.admin.enabled}")
@@ -46,77 +40,29 @@ public class AdminBootstrap
 
     @Override
     @Transactional
-    public void run(
-            ApplicationArguments args
-    ) {
+    public void run(ApplicationArguments args) {
 
-        if (!enabled) {
+        if (!enabled)
+            log.info("Bootstrap administrativo desabilitado.");
 
-            log.info(
-                    "Bootstrap administrativo desabilitado."
-            );
+        String emailNormalizado = email.trim().toLowerCase(Locale.ROOT);
+        String cpfNormalizado = cpf.replaceAll("\\D","");
+        var adminExistente = usuarioRepository.findByEmailIgnoreCase(emailNormalizado);
 
-            return;
-        }
+        if (adminExistente.isPresent())
+            log.info("Administrador bootstrap já existe: {}",emailNormalizado);
 
-        String emailNormalizado =
-                email
-                        .trim()
-                        .toLowerCase(
-                                Locale.ROOT
-                        );
 
-        String cpfNormalizado =
-                cpf.replaceAll(
-                        "\\D",
-                        ""
-                );
-
-        var adminExistente =
-                usuarioRepository
-                        .findByEmailIgnoreCase(
-                                emailNormalizado
-                        );
-
-        /*
-         * Bootstrap idempotente:
-         *
-         * se ja existir, nao cria duplicado.
-         */
-        if (adminExistente.isPresent()) {
-
-            log.info(
-                    "Administrador bootstrap já existe: {}",
-                    emailNormalizado
-            );
-
-            return;
-        }
-
-        Usuario admin =
-                new Usuario(
+        Usuario admin = new Usuario(
                         null,
-
-                        passwordEncoder.encode(
-                                senha
-                        ),
-
+                        passwordEncoder.encode(senha),
                         nome,
-
                         cpfNormalizado,
-
                         emailNormalizado,
-
                         Perfil.ADMIN
-                );
-
-        usuarioRepository.save(
-                admin
         );
 
-        log.info(
-                "Administrador bootstrap criado: {}",
-                emailNormalizado
-        );
+        usuarioRepository.save(admin);
+        log.info("Administrador bootstrap criado: {}",emailNormalizado);
     }
 }

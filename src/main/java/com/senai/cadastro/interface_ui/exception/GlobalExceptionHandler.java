@@ -20,21 +20,14 @@ import static com.senai.cadastro.interface_ui.exception.ProblemDetailUtils.build
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-    @ExceptionHandler(
-            MethodArgumentTypeMismatchException.class
-    )
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ProblemDetail handleTypeMismatch(
             MethodArgumentTypeMismatchException ex,
             HttpServletRequest request
     ) {
-
         return buildProblem(
-
                 HttpStatus.BAD_REQUEST,
-
                 "Tipo de parâmetro inválido",
-
                 String.format(
                         "O parâmetro '%s' deve ser do tipo '%s'. Valor recebido: '%s'",
                         ex.getName(),
@@ -43,182 +36,107 @@ public class GlobalExceptionHandler {
                                 : "desconhecido",
                         ex.getValue()
                 ),
-
                 request.getRequestURI()
         );
     }
 
-    @ExceptionHandler(
-            MethodArgumentNotValidException.class
-    )
+    @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail badRequest(
             MethodArgumentNotValidException ex,
             HttpServletRequest request
     ) {
-
-        ProblemDetail problem =
-                buildProblem(
-
+        ProblemDetail problem = buildProblem(
                         HttpStatus.BAD_REQUEST,
-
                         "Erro de validação",
-
                         "Um ou mais campos são inválidos",
-
                         request.getRequestURI()
                 );
 
-        Map<String, String> errors =
-                new HashMap<>();
-
+        Map<String, String> errors = new HashMap<>();
         ex.getBindingResult()
                 .getFieldErrors()
                 .forEach(
                         error ->
-                                errors.put(
-                                        error.getField(),
-                                        error.getDefaultMessage()
-                                )
+                                errors.put(error.getField(), error.getDefaultMessage())
                 );
-
-        problem.setProperty(
-                "errors",
-                errors
-        );
-
+        problem.setProperty("errors", errors);
         return problem;
     }
 
-    @ExceptionHandler(
-            HttpMessageNotReadableException.class
-    )
-    public ProblemDetail
-    handleInvalidBody(
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleInvalidBody(
             HttpMessageNotReadableException ex,
             HttpServletRequest request
     ) {
-
         return buildProblem(
-
                 HttpStatus.BAD_REQUEST,
-
                 "Corpo da requisição inválido",
-
                 "O JSON enviado não pôde ser interpretado",
-
                 request.getRequestURI()
         );
     }
 
-    @ExceptionHandler(
-            UsuarioNaoEncontradoException.class
-    )
-    public ProblemDetail
-    handleUsuarioNaoEncontrado(
+    @ExceptionHandler(UsuarioNaoEncontradoException.class)
+    public ProblemDetail handleUsuarioNaoEncontrado(
             UsuarioNaoEncontradoException ex,
             HttpServletRequest request
     ) {
-
         return buildProblem(
-
                 HttpStatus.NOT_FOUND,
-
                 "Usuário não encontrado",
-
                 ex.getMessage(),
-
                 request.getRequestURI()
         );
     }
 
-    @ExceptionHandler(
-            UsuarioDuplicadoException.class
-    )
-    public ProblemDetail
-    handleUsuarioDuplicado(
+    @ExceptionHandler(UsuarioDuplicadoException.class)
+    public ProblemDetail handleUsuarioDuplicado(
             UsuarioDuplicadoException ex,
             HttpServletRequest request
     ) {
-
         return buildProblem(
-
                 HttpStatus.CONFLICT,
-
                 "Usuário duplicado",
-
                 ex.getMessage(),
-
                 request.getRequestURI()
         );
     }
 
-    /*
-     * Segunda barreira contra conflitos de unicidade.
-     *
-     * Mesmo com validacao preventiva no service,
-     * o banco continua sendo a fonte final da verdade.
-     */
-    @ExceptionHandler(
-            DataIntegrityViolationException.class
-    )
-    public ProblemDetail
-    handleDataIntegrity(
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleDataIntegrity(
             DataIntegrityViolationException ex,
             HttpServletRequest request
     ) {
-
         return buildProblem(
-
                 HttpStatus.CONFLICT,
-
                 "Conflito de dados",
-
                 "A operação viola uma restrição de integridade dos dados",
-
                 request.getRequestURI()
         );
     }
 
-    @ExceptionHandler(
-            CredenciaisInvalidasException.class
-    )
-    public ProblemDetail
-    handleCredenciaisInvalidas(
+    @ExceptionHandler(CredenciaisInvalidasException.class)
+    public ProblemDetail handleCredenciaisInvalidas(
             CredenciaisInvalidasException ex,
             HttpServletRequest request
     ) {
-
         return buildProblem(
-
                 HttpStatus.UNAUTHORIZED,
-
                 "Credenciais inválidas",
-
                 ex.getMessage(),
-
                 request.getRequestURI()
         );
     }
 
-    /*
-     * Mantido do codigo atual.
-     */
-    @ExceptionHandler(
-            InternalError.class
-    )
+    @ExceptionHandler(InternalError.class)
     public ProblemDetail handleInternalError(
             InternalError ex,
             HttpServletRequest request
     ) {
-
         return buildProblem(
-
                 HttpStatus.INTERNAL_SERVER_ERROR,
-
                 "Erro interno do servidor",
-
                 "Ocorreu um erro interno no servidor.",
-
                 request.getRequestURI()
         );
     }

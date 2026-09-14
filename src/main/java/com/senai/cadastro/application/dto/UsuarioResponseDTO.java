@@ -8,35 +8,18 @@ import java.util.UUID;
 
 @Schema(
         name = "UsuarioResponse",
-        description =
-                "Representação pública do usuário. A senha nunca é retornada."
+        description = "Representação pública do usuário. A senha nunca é retornada."
 )
 public record UsuarioResponseDTO(
-
-        @Schema(
-                example =
-                        "550e8400-e29b-41d4-a716-446655440000"
-        )
+        @Schema(example ="550e8400-e29b-41d4-a716-446655440000")
         UUID id,
-
-        @Schema(
-                example = "João da Silva"
-        )
+        @Schema(example = "João da Silva")
         String nome,
-
-        @Schema(
-                example = "11144477735"
-        )
+        @Schema(example = "11144477735")
         String cpf,
-
-        @Schema(
-                example = "usuario@email.com"
-        )
+        @Schema(example = "usuario@email.com")
         String email,
-
-        @Schema(
-                example = "USER"
-        )
+        @Schema(example = "USER")
         Perfil perfil
 
 ) {
