@@ -1,0 +1,2386 @@
+{
+  "info": {
+    "_postman_id": "35f64fd3-96e5-4516-96de-207e5e49521e",
+    "name": "cadastro2DEVA - E2E completo v3",
+    "description": "Coleção única com variáveis internas. Testa autenticação, /usuario/me, CRUD, validações, 401/403/404/409, promoção/rebaixamento, JWT stateless, proteção do último ADMIN e ciclo do bootstrap.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@cadastro.local"
+    },
+    {
+      "key": "adminPassword",
+      "value": "Adm@1234"
+    },
+    {
+      "key": "adminCpf",
+      "value": "52998224725"
+    },
+    {
+      "key": "runId",
+      "value": ""
+    },
+    {
+      "key": "userName",
+      "value": ""
+    },
+    {
+      "key": "userEmail",
+      "value": ""
+    },
+    {
+      "key": "userEmailUpper",
+      "value": ""
+    },
+    {
+      "key": "userPassword",
+      "value": ""
+    },
+    {
+      "key": "userCpf",
+      "value": ""
+    },
+    {
+      "key": "updatedName",
+      "value": ""
+    },
+    {
+      "key": "updatedEmail",
+      "value": ""
+    },
+    {
+      "key": "updatedPassword",
+      "value": ""
+    },
+    {
+      "key": "updatedCpf",
+      "value": ""
+    },
+    {
+      "key": "duplicateCpf",
+      "value": ""
+    },
+    {
+      "key": "extraCpf",
+      "value": ""
+    },
+    {
+      "key": "conflictEmail",
+      "value": ""
+    },
+    {
+      "key": "notFoundId",
+      "value": "00000000-0000-0000-0000-000000000001"
+    },
+    {
+      "key": "invalidToken",
+      "value": "jwt.invalido.assinatura"
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "adminId",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "userToken",
+      "value": ""
+    },
+    {
+      "key": "promotedToken",
+      "value": ""
+    },
+    {
+      "key": "bootstrapUserToken",
+      "value": ""
+    },
+    {
+      "key": "bootstrapAdminToken2",
+      "value": ""
+    },
+    {
+      "key": "restoredAdminId",
+      "value": ""
+    },
+    {
+      "key": "restoredAdminToken",
+      "value": ""
+    },
+    {
+      "key": "downgradedToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "00 - Inicialização e contrato",
+      "item": [
+        {
+          "name": "00.1 - Inicializar variáveis e validar OpenAPI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/v3/api-docs"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function gerarCpf() {",
+                  "    function digito(nums, peso) {",
+                  "        let soma = 0;",
+                  "        for (let i = 0; i < nums.length; i++) soma += nums[i] * (peso - i);",
+                  "        const resto = soma % 11;",
+                  "        return resto < 2 ? 0 : 11 - resto;",
+                  "    }",
+                  "    let base;",
+                  "    do {",
+                  "        base = Array.from({length: 9}, () => Math.floor(Math.random() * 10));",
+                  "    } while (base.every(n => n === base[0]));",
+                  "    const d1 = digito(base, 10);",
+                  "    const d2 = digito([...base, d1], 11);",
+                  "    return [...base, d1, d2].join(\"\");",
+                  "}",
+                  "const runId = Date.now().toString() + Math.floor(Math.random() * 10000);",
+                  "const cpfs = new Set();",
+                  "while (cpfs.size < 4) cpfs.add(gerarCpf());",
+                  "const [cpf1, cpf2, cpf3, cpf4] = [...cpfs];",
+                  "",
+                  "pm.collectionVariables.set(\"runId\", runId);",
+                  "pm.collectionVariables.set(\"userName\", \"Usuário Postman \" + runId);",
+                  "pm.collectionVariables.set(\"userEmail\", \"postman.\" + runId + \"@example.com\");",
+                  "pm.collectionVariables.set(\"userEmailUpper\", (\"postman.\" + runId + \"@example.com\").toUpperCase());",
+                  "pm.collectionVariables.set(\"userPassword\", \"Usr@1234\");",
+                  "pm.collectionVariables.set(\"userCpf\", cpf1);",
+                  "pm.collectionVariables.set(\"updatedName\", \"Usuário Atualizado \" + runId);",
+                  "pm.collectionVariables.set(\"updatedEmail\", \"postman.updated.\" + runId + \"@example.com\");",
+                  "pm.collectionVariables.set(\"updatedPassword\", \"Usr@5678\");",
+                  "pm.collectionVariables.set(\"updatedCpf\", cpf2);",
+                  "pm.collectionVariables.set(\"duplicateCpf\", cpf3);",
+                  "pm.collectionVariables.set(\"extraCpf\", cpf4);",
+                  "pm.collectionVariables.set(\"conflictEmail\", \"postman.conflict.\" + runId + \"@example.com\");",
+                  "pm.collectionVariables.set(\"notFoundId\", \"00000000-0000-0000-0000-000000000001\");",
+                  "pm.collectionVariables.set(\"invalidToken\", \"jwt.invalido.assinatura\");",
+                  "",
+                  "[\"adminToken\",\"adminId\",\"userId\",\"userToken\",\"promotedToken\",\"bootstrapUserToken\",",
+                  " \"bootstrapAdminToken2\",\"restoredAdminId\",\"restoredAdminToken\",\"downgradedToken\"]",
+                  ".forEach(k => pm.collectionVariables.unset(k));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const api = pm.response.json();",
+                  "pm.test(\"/auth/login existe\", () => pm.expect(api.paths).to.have.property(\"/auth/login\"));",
+                  "pm.test(\"/usuario existe\", () => pm.expect(api.paths).to.have.property(\"/usuario\"));",
+                  "pm.test(\"/usuario/me existe\", () => pm.expect(api.paths).to.have.property(\"/usuario/me\"));",
+                  "pm.test(\"/usuario/{id} existe\", () => pm.expect(api.paths).to.have.property(\"/usuario/{id}\"));",
+                  "pm.test(\"/usuario/{id}/perfil existe\", () => pm.expect(api.paths).to.have.property(\"/usuario/{id}/perfil\"));",
+                  "pm.test(\"/auth/register não existe\", () => pm.expect(api.paths).to.not.have.property(\"/auth/register\"));",
+                  "pm.test(\"bearerAuth existe\", () => pm.expect(api.components.securitySchemes).to.have.property(\"bearerAuth\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "00.2 - Swagger UI público",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/swagger-ui/index.html"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 - Autenticação e /me",
+      "item": [
+        {
+          "name": "01.1 - Login bootstrap ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{adminEmail}}\",\"senha\":\"{{adminPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const b = pm.response.json();",
+                  "pm.test(\"perfil ADMIN\", () => pm.expect(b.usuario.perfil).to.eql(\"ADMIN\"));",
+                  "pm.test(\"token retornado\", () => pm.expect(b.token).to.be.a(\"string\").and.not.empty);",
+                  "pm.test(\"senha não exposta\", () => pm.expect(b.usuario).to.not.have.property(\"senha\"));",
+                  "pm.collectionVariables.set(\"adminToken\", b.token);",
+                  "pm.collectionVariables.set(\"adminId\", b.usuario.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01.2 - /usuario/me ADMIN",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/me"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const b = pm.response.json();",
+                  "pm.test(\"mesmo usuário\", () => pm.expect(b.id).to.eql(pm.collectionVariables.get(\"adminId\")));",
+                  "pm.test(\"perfil ADMIN\", () => pm.expect(b.perfil).to.eql(\"ADMIN\"));",
+                  "pm.test(\"senha não exposta\", () => pm.expect(b).to.not.have.property(\"senha\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01.3 - /usuario/me sem token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/usuario/me"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 401\", function () { pm.response.to.have.status(401); });",
+                  "const p = pm.response.json();",
+                  "pm.test(\"ProblemDetail status 401\", function () { pm.expect(p.status).to.eql(401); });",
+                  "pm.test(\"ProblemDetail padrão\", function () { pm.expect(p).to.have.property(\"title\"); pm.expect(p).to.have.property(\"detail\"); pm.expect(p).to.have.property(\"instance\"); pm.expect(p).to.have.property(\"timestamp\"); pm.expect(p.application).to.eql(\"cadastroAPI\"); });",
+                  "pm.test(\"Título esperado\", function () { pm.expect(p.title).to.eql(\"Não autenticado\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01.4 - /usuario/me token inválido",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{invalidToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/me"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 401\", function () { pm.response.to.have.status(401); });",
+                  "const p = pm.response.json();",
+                  "pm.test(\"ProblemDetail status 401\", function () { pm.expect(p.status).to.eql(401); });",
+                  "pm.test(\"ProblemDetail padrão\", function () { pm.expect(p).to.have.property(\"title\"); pm.expect(p).to.have.property(\"detail\"); pm.expect(p).to.have.property(\"instance\"); pm.expect(p).to.have.property(\"timestamp\"); pm.expect(p.application).to.eql(\"cadastroAPI\"); });",
+                  "pm.test(\"Título esperado\", function () { pm.expect(p.title).to.eql(\"Não autenticado\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01.5 - Login senha errada",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{adminEmail}}\",\"senha\":\"SenhaErrada\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 401\", function () { pm.response.to.have.status(401); });",
+                  "const p = pm.response.json();",
+                  "pm.test(\"ProblemDetail status 401\", function () { pm.expect(p.status).to.eql(401); });",
+                  "pm.test(\"ProblemDetail padrão\", function () { pm.expect(p).to.have.property(\"title\"); pm.expect(p).to.have.property(\"detail\"); pm.expect(p).to.have.property(\"instance\"); pm.expect(p).to.have.property(\"timestamp\"); pm.expect(p.application).to.eql(\"cadastroAPI\"); });",
+                  "pm.test(\"Título esperado\", function () { pm.expect(p.title).to.eql(\"Credenciais inválidas\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01.6 - Login e-mail inválido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"email-invalido\",\"senha\":\"x\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "const p = pm.response.json();",
+                  "pm.test(\"ProblemDetail status 400\", function () { pm.expect(p.status).to.eql(400); });",
+                  "pm.test(\"ProblemDetail padrão\", function () { pm.expect(p).to.have.property(\"title\"); pm.expect(p).to.have.property(\"detail\"); pm.expect(p).to.have.property(\"instance\"); pm.expect(p).to.have.property(\"timestamp\"); pm.expect(p.application).to.eql(\"cadastroAPI\"); });",
+                  "pm.test(\"Título esperado\", function () { pm.expect(p.title).to.eql(\"Erro de validação\"); });",
+                  "pm.test(\"Erro do campo email\", function () { pm.expect(p.errors).to.have.property(\"email\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01.7 - Login senha vazia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{adminEmail}}\",\"senha\":\"\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "const p = pm.response.json();",
+                  "pm.test(\"ProblemDetail status 400\", function () { pm.expect(p.status).to.eql(400); });",
+                  "pm.test(\"ProblemDetail padrão\", function () { pm.expect(p).to.have.property(\"title\"); pm.expect(p).to.have.property(\"detail\"); pm.expect(p).to.have.property(\"instance\"); pm.expect(p).to.have.property(\"timestamp\"); pm.expect(p.application).to.eql(\"cadastroAPI\"); });",
+                  "pm.test(\"Título esperado\", function () { pm.expect(p.title).to.eql(\"Erro de validação\"); });",
+                  "pm.test(\"Erro do campo senha\", function () { pm.expect(p.errors).to.have.property(\"senha\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01.8 - Login JSON quebrado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{adminEmail}}\",\"senha\":\"{{adminPassword}}\"",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "const p = pm.response.json();",
+                  "pm.test(\"ProblemDetail status 400\", function () { pm.expect(p.status).to.eql(400); });",
+                  "pm.test(\"ProblemDetail padrão\", function () { pm.expect(p).to.have.property(\"title\"); pm.expect(p).to.have.property(\"detail\"); pm.expect(p).to.have.property(\"instance\"); pm.expect(p).to.have.property(\"timestamp\"); pm.expect(p.application).to.eql(\"cadastroAPI\"); });",
+                  "pm.test(\"Título esperado\", function () { pm.expect(p.title).to.eql(\"Corpo da requisição inválido\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01.9 - /auth/register removido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nome\":\"{{userName}}\",\"cpf\":\"{{userCpf}}\",\"email\":\"{{userEmailUpper}}\",\"senha\":\"{{userPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Proteção do último ADMIN",
+      "item": [
+        {
+          "name": "02.1 - Rebaixar último ADMIN",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{adminId}}/perfil",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"perfil\":\"USER\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", function () { pm.response.to.have.status(409); });",
+                  "const p = pm.response.json();",
+                  "pm.test(\"ProblemDetail status 409\", function () { pm.expect(p.status).to.eql(409); });",
+                  "pm.test(\"ProblemDetail padrão\", function () { pm.expect(p).to.have.property(\"title\"); pm.expect(p).to.have.property(\"detail\"); pm.expect(p).to.have.property(\"instance\"); pm.expect(p).to.have.property(\"timestamp\"); pm.expect(p.application).to.eql(\"cadastroAPI\"); });",
+                  "pm.test(\"Título esperado\", function () { pm.expect(p.title).to.eql(\"Operação administrativa inválida\"); });",
+                  "pm.test(\"Detail esperado\", function () { pm.expect(p.detail).to.eql(\"O último administrador do sistema não pode ser removido ou rebaixado.\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02.2 - Excluir último ADMIN",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{adminId}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", function () { pm.response.to.have.status(409); });",
+                  "const p = pm.response.json();",
+                  "pm.test(\"ProblemDetail status 409\", function () { pm.expect(p.status).to.eql(409); });",
+                  "pm.test(\"ProblemDetail padrão\", function () { pm.expect(p).to.have.property(\"title\"); pm.expect(p).to.have.property(\"detail\"); pm.expect(p).to.have.property(\"instance\"); pm.expect(p).to.have.property(\"timestamp\"); pm.expect(p.application).to.eql(\"cadastroAPI\"); });",
+                  "pm.test(\"Título esperado\", function () { pm.expect(p.title).to.eql(\"Operação administrativa inválida\"); });",
+                  "pm.test(\"Detail esperado\", function () { pm.expect(p.detail).to.eql(\"O último administrador do sistema não pode ser removido ou rebaixado.\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Cadastro e validações",
+      "item": [
+        {
+          "name": "03.1 - Cadastro sem token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nome\":\"{{userName}}\",\"cpf\":\"{{userCpf}}\",\"email\":\"{{userEmailUpper}}\",\"senha\":\"{{userPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 401\", function () { pm.response.to.have.status(401); });",
+                  "const p = pm.response.json();",
+                  "pm.test(\"ProblemDetail status 401\", function () { pm.expect(p.status).to.eql(401); });",
+                  "pm.test(\"ProblemDetail padrão\", function () { pm.expect(p).to.have.property(\"title\"); pm.expect(p).to.have.property(\"detail\"); pm.expect(p).to.have.property(\"instance\"); pm.expect(p).to.have.property(\"timestamp\"); pm.expect(p.application).to.eql(\"cadastroAPI\"); });",
+                  "pm.test(\"Título esperado\", function () { pm.expect(p.title).to.eql(\"Não autenticado\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03.2 - ADMIN cadastra USER",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nome\":\"{{userName}}\",\"cpf\":\"{{userCpf}}\",\"email\":\"{{userEmailUpper}}\",\"senha\":\"{{userPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                  "const b=pm.response.json();",
+                  "pm.test(\"nasce USER\",()=>pm.expect(b.perfil).to.eql(\"USER\"));",
+                  "pm.test(\"email normalizado\",()=>pm.expect(b.email).to.eql(pm.collectionVariables.get(\"userEmail\")));",
+                  "pm.test(\"senha não exposta\",()=>pm.expect(b).to.not.have.property(\"senha\"));",
+                  "pm.collectionVariables.set(\"userId\",b.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03.3 - E-mail duplicado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nome\":\"Duplicado\",\"cpf\":\"{{duplicateCpf}}\",\"email\":\"{{userEmail}}\",\"senha\":\"{{userPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", function () { pm.response.to.have.status(409); });",
+                  "const p = pm.response.json();",
+                  "pm.test(\"ProblemDetail status 409\", function () { pm.expect(p.status).to.eql(409); });",
+                  "pm.test(\"Título esperado\", function () { pm.expect(p.title).to.eql(\"Usuário duplicado\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03.4 - CPF duplicado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nome\":\"Duplicado\",\"cpf\":\"{{userCpf}}\",\"email\":\"outro.{{runId}}@example.com\",\"senha\":\"{{userPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", function () { pm.response.to.have.status(409); });",
+                  "const p = pm.response.json();",
+                  "pm.test(\"ProblemDetail status 409\", function () { pm.expect(p.status).to.eql(409); });",
+                  "pm.test(\"Título esperado\", function () { pm.expect(p.title).to.eql(\"Usuário duplicado\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03.5 - Campos inválidos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nome\":\"\",\"cpf\":\"123\",\"email\":\"invalido\",\"senha\":\"1\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "const p = pm.response.json();",
+                  "pm.test(\"Título esperado\", function () { pm.expect(p.title).to.eql(\"Erro de validação\"); });",
+                  "pm.test(\"erro nome\",()=>pm.expect(p.errors).to.have.property(\"nome\"));",
+                  "pm.test(\"erro cpf\",()=>pm.expect(p.errors).to.have.property(\"cpf\"));",
+                  "pm.test(\"erro email\",()=>pm.expect(p.errors).to.have.property(\"email\"));",
+                  "pm.test(\"erro senha\",()=>pm.expect(p.errors).to.have.property(\"senha\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03.6 - JSON inválido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nome\":\"Quebrado\",\"cpf\":\"{{extraCpf}}\"",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "const p=pm.response.json();",
+                  "pm.test(\"corpo inválido\",()=>pm.expect(p.title).to.eql(\"Corpo da requisição inválido\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - CRUD administrativo",
+      "item": [
+        {
+          "name": "04.1 - Listar usuários",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const b=pm.response.json();",
+                  "pm.test(\"lista\",()=>pm.expect(b).to.be.an(\"array\"));",
+                  "pm.test(\"contém USER criado\",()=>pm.expect(b.some(u=>u.id===pm.collectionVariables.get(\"userId\"))).to.eql(true));",
+                  "pm.test(\"sem senha\",()=>b.forEach(u=>pm.expect(u).to.not.have.property(\"senha\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04.2 - Buscar por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{userId}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04.3 - Buscar UUID inválido",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/uuid-invalido"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "const p=pm.response.json();",
+                  "pm.test(\"tipo inválido\",()=>pm.expect(p.title).to.eql(\"Tipo de parâmetro inválido\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04.4 - Buscar inexistente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{notFoundId}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "const p=pm.response.json();",
+                  "pm.test(\"não encontrado\",()=>pm.expect(p.title).to.eql(\"Usuário não encontrado\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04.5 - Atualizar usuário",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{userId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nome\":\"{{updatedName}}\",\"cpf\":\"{{updatedCpf}}\",\"email\":\"{{updatedEmail}}\",\"senha\":\"{{updatedPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const b=pm.response.json();",
+                  "pm.test(\"nome atualizado\",()=>pm.expect(b.nome).to.eql(pm.collectionVariables.get(\"updatedName\")));",
+                  "pm.test(\"email atualizado\",()=>pm.expect(b.email).to.eql(pm.collectionVariables.get(\"updatedEmail\")));",
+                  "pm.test(\"perfil continua USER\",()=>pm.expect(b.perfil).to.eql(\"USER\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04.6 - Atualização inválida",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{userId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nome\":\"\",\"cpf\":\"123\",\"email\":\"invalido\",\"senha\":\"1\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04.7 - Atualização e-mail conflitante",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{userId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nome\":\"Conflito\",\"cpf\":\"{{updatedCpf}}\",\"email\":\"{{adminEmail}}\",\"senha\":\"{{updatedPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04.8 - Atualização CPF conflitante",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{userId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nome\":\"Conflito\",\"cpf\":\"{{adminCpf}}\",\"email\":\"{{conflictEmail}}\",\"senha\":\"{{updatedPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04.9 - Atualizar inexistente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{notFoundId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nome\":\"{{updatedName}}\",\"cpf\":\"{{updatedCpf}}\",\"email\":\"{{updatedEmail}}\",\"senha\":\"{{updatedPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04.10 - Deletar UUID inválido",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/uuid-invalido"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - USER e autorização",
+      "item": [
+        {
+          "name": "05.1 - Login USER",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{updatedEmail}}\",\"senha\":\"{{updatedPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const b=pm.response.json();",
+                  "pm.test(\"USER\",()=>pm.expect(b.usuario.perfil).to.eql(\"USER\"));",
+                  "pm.collectionVariables.set(\"userToken\",b.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.2 - USER acessa /me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/me"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const b=pm.response.json();",
+                  "pm.test(\"próprio ID\",()=>pm.expect(b.id).to.eql(pm.collectionVariables.get(\"userId\")));",
+                  "pm.test(\"dados atuais\",()=>pm.expect(b.email).to.eql(pm.collectionVariables.get(\"updatedEmail\")));",
+                  "pm.test(\"senha não exposta\",()=>pm.expect(b).to.not.have.property(\"senha\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.3 - USER lista usuários",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.4 - USER busca endpoint admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{userId}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.5 - USER tenta cadastrar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nome\":\"{{userName}}\",\"cpf\":\"{{userCpf}}\",\"email\":\"{{userEmailUpper}}\",\"senha\":\"{{userPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.6 - USER tenta atualizar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{userId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nome\":\"{{updatedName}}\",\"cpf\":\"{{updatedCpf}}\",\"email\":\"{{updatedEmail}}\",\"senha\":\"{{updatedPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.7 - USER tenta promover perfil",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{userId}}/perfil",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"perfil\":\"ADMIN\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.8 - USER tenta excluir",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{userId}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 - Promoção e JWT stateless",
+      "item": [
+        {
+          "name": "06.1 - Promover USER para ADMIN",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{userId}}/perfil",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"perfil\":\"ADMIN\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const b=pm.response.json();",
+                  "pm.test(\"virou ADMIN\",()=>pm.expect(b.perfil).to.eql(\"ADMIN\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06.2 - Token USER antigo continua 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06.3 - Token USER antigo vê ADMIN atual em /me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/me"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const b=pm.response.json();",
+                  "pm.test(\"banco mostra ADMIN\",()=>pm.expect(b.perfil).to.eql(\"ADMIN\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06.4 - Novo login recebe ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{updatedEmail}}\",\"senha\":\"{{updatedPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const b=pm.response.json();",
+                  "pm.test(\"ADMIN\",()=>pm.expect(b.usuario.perfil).to.eql(\"ADMIN\"));",
+                  "pm.collectionVariables.set(\"promotedToken\",b.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06.5 - Novo ADMIN acessa /usuario",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{promotedToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06.6 - Perfil nulo",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{userId}}/perfil",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"perfil\":null}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06.7 - Perfil inexistente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{userId}}/perfil",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"perfil\":\"SUPER_ADMIN\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 - Ciclo do bootstrap",
+      "item": [
+        {
+          "name": "07.1 - Outro ADMIN rebaixa bootstrap para USER",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{promotedToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{adminId}}/perfil",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"perfil\":\"USER\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const b=pm.response.json();",
+                  "pm.test(\"bootstrap USER\",()=>pm.expect(b.perfil).to.eql(\"USER\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.2 - Token ADMIN antigo do bootstrap ainda acessa /usuario",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.3 - /me do token antigo mostra USER atual",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/me"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const b=pm.response.json();",
+                  "pm.test(\"banco mostra USER\",()=>pm.expect(b.perfil).to.eql(\"USER\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.4 - Novo login bootstrap recebe USER",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{adminEmail}}\",\"senha\":\"{{adminPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const b=pm.response.json();",
+                  "pm.test(\"USER\",()=>pm.expect(b.usuario.perfil).to.eql(\"USER\"));",
+                  "pm.collectionVariables.set(\"bootstrapUserToken\",b.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.5 - Token USER novo não acessa admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bootstrapUserToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 403\", function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.6 - Reativar bootstrap como ADMIN",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{promotedToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{adminId}}/perfil",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"perfil\":\"ADMIN\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.7 - Novo login bootstrap ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{adminEmail}}\",\"senha\":\"{{adminPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const b=pm.response.json();",
+                  "pm.test(\"ADMIN\",()=>pm.expect(b.usuario.perfil).to.eql(\"ADMIN\"));",
+                  "pm.collectionVariables.set(\"bootstrapAdminToken2\",b.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.8 - Excluir bootstrap com outro ADMIN existente",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{promotedToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{adminId}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.9 - Login bootstrap apagado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{adminEmail}}\",\"senha\":\"{{adminPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 401\", function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.10 - JWT ADMIN antigo do bootstrap ainda autoriza",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bootstrapAdminToken2}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.11 - /me com JWT antigo de usuário apagado retorna 404",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bootstrapAdminToken2}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/me"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08 - Restaurar bootstrap e limpar teste",
+      "item": [
+        {
+          "name": "08.1 - Recriar identidade bootstrap como USER",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{promotedToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nome\":\"Administrador\",\"cpf\":\"{{adminCpf}}\",\"email\":\"{{adminEmail}}\",\"senha\":\"{{adminPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                  "const b=pm.response.json();",
+                  "pm.test(\"nasce USER\",()=>pm.expect(b.perfil).to.eql(\"USER\"));",
+                  "pm.collectionVariables.set(\"restoredAdminId\",b.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.2 - Promover identidade restaurada",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{promotedToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{restoredAdminId}}/perfil",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"perfil\":\"ADMIN\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.3 - Login identidade restaurada",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{adminEmail}}\",\"senha\":\"{{adminPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const b=pm.response.json();",
+                  "pm.test(\"ADMIN\",()=>pm.expect(b.usuario.perfil).to.eql(\"ADMIN\"));",
+                  "pm.collectionVariables.set(\"restoredAdminToken\",b.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.4 - Rebaixar usuário de teste para USER",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{restoredAdminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{userId}}/perfil",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"perfil\":\"USER\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.5 - Login usuário rebaixado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{updatedEmail}}\",\"senha\":\"{{updatedPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const b=pm.response.json();",
+                  "pm.test(\"USER\",()=>pm.expect(b.usuario.perfil).to.eql(\"USER\"));",
+                  "pm.collectionVariables.set(\"downgradedToken\",b.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.6 - Excluir usuário de teste",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{restoredAdminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{userId}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.7 - /me de usuário excluído com JWT antigo -> 404",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{downgradedToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/me"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.8 - Restou 1 ADMIN: rebaixamento bloqueado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{restoredAdminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{restoredAdminId}}/perfil",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"perfil\":\"USER\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", function () { pm.response.to.have.status(409); });",
+                  "const p=pm.response.json();",
+                  "pm.test(\"último ADMIN protegido\",()=>pm.expect(p.title).to.eql(\"Operação administrativa inválida\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.9 - Restou 1 ADMIN: exclusão bloqueada",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{restoredAdminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/{{restoredAdminId}}"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.10 - Estado final /me ADMIN",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{restoredAdminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/usuario/me"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const b=pm.response.json();",
+                  "pm.test(\"ADMIN final\",()=>pm.expect(b.perfil).to.eql(\"ADMIN\"));",
+                  "pm.test(\"email conhecido\",()=>pm.expect(b.email).to.eql(pm.collectionVariables.get(\"adminEmail\")));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
