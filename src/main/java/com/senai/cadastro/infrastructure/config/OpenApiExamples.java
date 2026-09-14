@@ -65,7 +65,7 @@ public final class OpenApiExamples {
               "title": "Erro de validação",
               "status": 400,
               "detail": "Um ou mais campos são inválidos",
-              "instance": "/auth/register",
+              "instance": "/usuario",
               "timestamp": "2026-09-14T12:00:00",
               "application": "cadastroAPI",
               "errors": {
@@ -141,7 +141,7 @@ public final class OpenApiExamples {
               "title": "Usuário duplicado",
               "status": 409,
               "detail": "Já existe um usuário cadastrado com este e-mail",
-              "instance": "/auth/register",
+              "instance": "/usuario",
               "timestamp": "2026-09-14T12:00:00",
               "application": "cadastroAPI"
             }
