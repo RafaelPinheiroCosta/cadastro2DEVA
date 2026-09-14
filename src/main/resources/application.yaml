@@ -1,18 +1,96 @@
 spring:
+
   application:
     name: cadastro
+
   datasource:
+
     url: jdbc:h2:mem:cadastro
+
     driver-class-name: org.h2.Driver
+
     username: sa
+
     password:
+
   jpa:
+
     database-platform: org.hibernate.dialect.H2Dialect
+
+    open-in-view: false
+
     hibernate:
       ddl-auto: update
+
     show-sql: true
+
   h2:
+
     console:
-      enabled: true
+
+      enabled: ${H2_CONSOLE_ENABLED:true}
+
       path: /h2-console
 
+
+# ============================================================
+# SEGURANCA
+# ============================================================
+
+security:
+
+  jwt:
+
+    issuer: ${JWT_ISSUER:cadastro-api}
+
+    expires-in-seconds: ${JWT_EXPIRES_IN_SECONDS:3600}
+
+    # Valor padrao SOMENTE para desenvolvimento.
+    #
+    # Em producao deve ser substituido pela variavel:
+    #
+    # JWT_SECRET
+    #
+    # A chave deve representar pelo menos 256 bits.
+    secret: ${JWT_SECRET:Y2FkYXN0cm8tZGV2LWp3dC1zZWNyZXQta2V5LTMyLWJ5dGVzLW1pbmltdW0=}
+
+
+# ============================================================
+# ADMINISTRADOR INICIAL
+# ============================================================
+
+bootstrap:
+
+  admin:
+
+    enabled: ${BOOTSTRAP_ADMIN_ENABLED:true}
+
+    nome: ${BOOTSTRAP_ADMIN_NOME:Administrador}
+
+    cpf: ${BOOTSTRAP_ADMIN_CPF:52998224725}
+
+    email: ${BOOTSTRAP_ADMIN_EMAIL:admin@cadastro.local}
+
+    # Mantendo a regra atual do projeto:
+    # senha entre 4 e 8 caracteres.
+    senha: ${BOOTSTRAP_ADMIN_PASSWORD:Adm@1234}
+
+
+# ============================================================
+# OPENAPI
+# ============================================================
+
+springdoc:
+
+  api-docs:
+    path: /v3/api-docs
+
+  swagger-ui:
+
+    path: /swagger-ui.html
+
+    persist-authorization: true
+
+    display-request-duration: true
+
+    try-it-out-enabled: true
