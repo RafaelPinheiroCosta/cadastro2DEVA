@@ -31,12 +31,10 @@ public class UsuarioService {
                 .map(UsuarioResponseDTO::fromEntity)
                 .toList();
     }
-
     @Transactional(readOnly = true)
     public UsuarioResponseDTO findById(UUID id) {
         return UsuarioResponseDTO.fromEntity(buscarEntidadePorId(id));
     }
-
     @Transactional
     public UsuarioResponseDTO save(UsuarioRequestDTO usuarioRequestDTO) {
 

@@ -25,7 +25,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 
-@Tag(name = "Autenticação", description = "Autenticação e emissão de token JWT")
+@Tag(
+        name = "Autenticação",
+        description = "Autenticação e emissão de token JWT"
+)
 public class AuthController {
 
     private final AuthService authService;

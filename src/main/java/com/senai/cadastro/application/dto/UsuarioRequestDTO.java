@@ -41,13 +41,12 @@ public record UsuarioRequestDTO(
 ) {
 
     public Usuario toEntity() {
-        return new Usuario(
-                null,
-                senha,
-                nome,
-                cpf,
-                email,
-                Perfil.USER
-        );
+        return Usuario.builder()
+                .nome(nome)
+                .cpf(cpf)
+                .email(email)
+                .senha(senha)
+                .perfil(Perfil.USER)
+                .build();
     }
 }

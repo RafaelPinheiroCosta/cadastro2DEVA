@@ -64,6 +64,7 @@ public class AdminBootstrap
                         Perfil.ADMIN
         );
 
+
         usuarioRepository.save(admin);
         log.info("Administrador bootstrap criado: {}",emailNormalizado);
     }
